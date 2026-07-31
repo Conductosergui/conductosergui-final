@@ -1,0 +1,54 @@
+name: Regenerate package-lock.json
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to update (e.g. fix/sync-package-lock)'
+        required: true
+        default: 'fix/sync-package-lock'
+
+jobs:
+  regen-lock:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+          persist-credentials: true
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Show disk space
+        run: df -h
+
+      - name: Clean existing artifacts
+        run: |
+          rm -rf node_modules .next package-lock.json || true
+          npm cache clean --force || true
+
+      - name: Install dependencies and generate lockfile
+        run: npm install --no-audit --no-fund
+
+      - name: Verify with npm ci
+        run: |
+          rm -rf node_modules
+          npm ci
+
+      - name: Commit and push updated package-lock.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "chore: regenerate package-lock.json (via Actions)" || echo "no changes to commit"
+          git push origin HEAD:${{ github.event.inputs.branch }} || echo "push failed"
+
+      - name: Done
+        run: echo "DONE"
