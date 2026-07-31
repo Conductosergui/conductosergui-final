@@ -59,6 +59,7 @@ const structuredData = {
         "@type": "PostalAddress",
         "addressLocality": "Cunit",
         "addressRegion": "Tarragona",
+        "postalCode": "43881",
         "addressCountry": "ES"
       }
     }
@@ -80,4 +81,4 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </body>
     </html>
   );
-}</head>
+}
